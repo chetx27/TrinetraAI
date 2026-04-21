@@ -1,0 +1,65 @@
+# ─────────────────────────────────────────────────────────────
+# Ambient-Vision Assistant — master configuration
+# ─────────────────────────────────────────────────────────────
+
+camera:
+  index: 0
+  width: 640
+  height: 480
+  fps: 30
+
+face_tracking:
+  # MediaPipe FaceMesh parameters
+  max_num_faces: 1
+  min_detection_confidence: 0.5
+  min_tracking_confidence: 0.5
+  # Head-pose thresholds (degrees)
+  yaw_threshold: 15.0
+  pitch_threshold: 10.0
+
+hand_tracking:
+  # MediaPipe Hands parameters
+  max_num_hands: 1
+  min_detection_confidence: 0.5
+  min_tracking_confidence: 0.5
+
+classifier:
+  # Path to the trained model pickle
+  model_path: "classifier/data/model.pkl"
+  # Use LSTM instead of SVM (requires --lstm flag)
+  use_lstm: false
+  # Confidence threshold below which we output "neutral"
+  confidence_threshold: 0.6
+
+gesture_action_map:
+  head_turn_left: "scroll_left"
+  head_turn_right: "scroll_right"
+  head_nod_down: "scroll_down"
+  head_tilt_up: "scroll_up"
+  open_palm: "left_click"
+  fist: "right_click"
+  peace_sign: "app_launcher"
+  neutral: "no_action"
+
+actions:
+  scroll_amount: 5
+  # Hotkey for app launcher (Windows: win; macOS: command)
+  app_launcher_hotkey: "win"
+
+overlay:
+  show_landmarks: true
+  show_label: true
+  show_latency: true
+  font_scale: 0.7
+  font_thickness: 2
+  label_color: [0, 255, 0]    # BGR green
+  latency_color: [255, 255, 0] # BGR cyan
+
+training:
+  default_samples: 60
+  countdown_seconds: 3
+  output_dir: "classifier/data"
+
+metrics:
+  # Ring-buffer size for latency tracking
+  buffer_size: 300

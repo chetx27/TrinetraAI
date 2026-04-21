@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.pkl
+*.keras
+*.meta.pkl
+classifier/data/*.npy
+.venv/
+venv/
+env/
