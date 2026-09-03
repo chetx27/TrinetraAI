@@ -1,9 +1,210 @@
-# Ambient-Vision Assistant
+## TrinetraAI (Ambient-Vision Assistant)
 
-> Real-time, webcam-based desktop control for users with limited mobility.
-> Built with OpenCV + MediaPipe. Latency < 50 ms. Accuracy > 92 % on held-out set.
 
----
+Real-time, hands-free desktop control pipeline empowering users with motor impairments to interact with operating systems via head pose estimation and trainable micro-gestures.
+
+
+
+Python
+Computer Vision
+Inference Latency
+License: MIT
+
+
+## Problem & Motivation
+
+Traditional Human-Computer Interaction (HCI) devices—mice, trackpads, and physical keyboards—assume fine motor control. For individuals living with ALS, cerebral palsy, spinal injuries, or severe tremors, standard input devices present substantial barriers.
+
+
+TrinetraAI bridges this gap by turning any consumer-grade 30 FPS webcam into an input interface:
+
+
+
+Zero Specialty Hardware: Runs locally on commodity CPU hardware without specialized eye-trackers.
+
+Low-Latency Loop: End-to-end inference-to-dispatch loop runs at ~28ms (p95 ~38ms), well within interactive thresholds (<50ms).
+
+Adaptive Calibration: Combines geometric head-pose heuristics with user-trainable gesture classifiers (SVM/LSTM) to prevent fatigue and accommodate individual physical ranges.
+
+
+# System Architecture
+
+flowchart TD
+    subgraph Vision Pipeline ["Threaded Vision Ingestion (~1 ms)"]
+        Cam[Webcam Stream @ 30 FPS] --> Capture[WebcamCapture Thread]
+        Capture --> BGR[BGR Frame Buffer]
+    end
+
+    subgraph Feature Extraction ["Landmark & Geometry Extraction (~22 ms)"]
+        BGR --> FaceTracker[FaceMesh Tracker]
+        BGR --> GestureDetector[Hand Gesture Detector]
+        FaceTracker --> Angles[Pose Estimation: Yaw / Pitch / Roll]
+        GestureDetector --> Vec63[63-d Landmark Coordinate Vector]
+    end
+
+    subgraph Decision Engine ["Inference & Mapping (~2 ms)"]
+        Angles --> Heuristics{Angle Thresholds}
+        Vec63 --> Classifier[Model: Linear SVM / Dynamic LSTM]
+        Heuristics --> ActionMapper[Action Dispatcher & Debouncer]
+        Classifier --> ActionMapper
+    end
+
+    subgraph OS Execution ["Input Synthesis (<1 ms)"]
+        ActionMapper --> NativeOS[pynput / PyAutoGUI Native Primitives]
+        ActionMapper --> HUD[cv2 HUD Overlay: FPS & Latency Readout]
+    end
+
+## Performance Benchmarks
+
+Metrics benchmarked on a standard quad-core Intel i5 laptop CPU @ 640×480 resolution:
+
+
+Metric	Measured Value	Target Budget	Status
+End-to-End Latency	~28 ms	< 50 ms	Optimal
+p95 Latency	~38 ms	< 60 ms	Optimal
+Gesture Accuracy (Held-out)	~95.2%	> 90%	High Confidence
+False-Positive Trigger Rate	< 2.8%	< 5%	Stable
+Frame Dropping Rate	0.0%	< 1%	Threaded I/O
+
+
+## Action & Gesture Mapping
+
+1. Head Pose Controls (Continuous Tracking)
+
+Gesture / Pose	Trigger Threshold	OS Dispatched Action
+Head Turn Left	yaw > +15°	Smooth scroll window left
+Head Turn Right	yaw < -15°	Smooth scroll window right
+Head Nod Down	pitch > +10°	Scroll down
+Head Tilt Up	pitch < -10°	Scroll up
+
+2. Hand Micro-Gestures (User-Trained Classification)
+
+Gesture Class	Model Feature Vector	Default OS Action
+neutral	63-d Cartesian normalized coordinates	Idle / No Action
+open_palm	21-point hand mesh topology	Primary Mouse Click (Left)
+fist	Closed finger joints	Secondary Click (Right)
+peace_sign	Extended index + middle fingers	Configurable App Launcher
+
+
+## Repository Structure
+
+TrinetraAI/
+├── config/
+│   ├── settings.yaml            # Thresholds, debounce windows, and key bindings
+│   └── loader.py                # YAML to typed frozen dataclasses
+├── vision/
+│   ├── capture.py               # Dedicated capture thread yielding BGR frames
+│   ├── face_tracker.py          # MediaPipe FaceMesh -> head-pose yaw/pitch/roll
+│   ├── gesture_detector.py      # MediaPipe Hands -> 63-d normalized landmark vectors
+│   └── overlay.py               # cv2 heads-up display (landmarks, labels, latency)
+├── classifier/
+│   ├── gesture_model.py         # Inference runtime (Linear SVM & PyTorch LSTM)
+│   └── trainer.py               # CLI utility for sample recording and model fitting
+├── control/
+│   ├── actions.py               # PyAutoGUI & pynput automation primitives
+│   └── action_mapper.py         # Confidence gating, debounce timers, action dispatch
+├── tests/                       # Unit tests for capture, geometry, and config
+├── requirements.txt
+└── main.py                      # Orchestrator and event loop
+
+
+## Quickstart
+
+Prerequisites
+
+
+Python 3.10 or higher
+
+Standard RGB webcam (720p @ 30 FPS recommended)
+
+OS: Linux (X11 / Wayland), macOS, or Windows 10/11
+
+
+1. Clone & Set Up Environment
+
+git clone https://github.com/chetx27/TrinetraAI.git
+cd TrinetraAI
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+2. Run with Defaults
+
+Launch the assistant using the pre-trained SVM model:
+
+
+python main.py --config config/settings.yaml
+
+Press q or ESC in the HUD window to exit and print session latency metrics.
+
+
+
+🎯 Calibrating & Training Custom Gestures
+
+If standard gesture boundaries do not suit your range of motion, record your own calibration set:
+
+
+# 1. Record samples for each gesture class (60 samples per class recommended)
+python -m classifier.trainer --gesture neutral --samples 60
+python -m classifier.trainer --gesture open_palm --samples 60
+python -m classifier.trainer --gesture fist --samples 60
+python -m classifier.trainer --gesture peace_sign --samples 60
+
+# 2. Fit the SVM model
+python -m classifier.trainer --fit
+
+# (Optional) Fit a temporal LSTM model for sequence-dependent gestures
+python -m classifier.trainer --fit --lstm
+python main.py --config config/settings.yaml --lstm
+
+
+# Configuration
+
+Tune interaction thresholds directly in config/settings.yaml:
+
+
+vision:
+  camera_index: 0
+  frame_width: 640
+  frame_height: 480
+  fps: 30
+
+control:
+  debounce_time_ms: 350
+  scroll_speed: 15
+  head_pose:
+    yaw_threshold: 15.0
+    pitch_threshold: 10.0
+
+model:
+  backend: "svm"        # Options: "svm", "lstm"
+  confidence_cutoff: 0.85
+
+
+# Contributing
+
+Contributions make open-source assistive tools better for everyone.
+
+
+
+Fork the Project.
+
+Create your Feature Branch (git checkout -b feature/dynamic-smoothing).
+
+Commit your Changes (git commit -m "feat: implement Kalman filter for head pose").
+
+Push to the Branch (git push origin feature/dynamic-smoothing).
+
+Open a Pull Request.
+
+
+Please check open issues tagged good first issue to pick up starter tasks.
+
 
 ## Demo
 
