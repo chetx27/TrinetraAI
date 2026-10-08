@@ -58,14 +58,12 @@ flowchart TD
 
 Metrics benchmarked on a standard quad-core Intel i5 laptop CPU @ 640×480 resolution:
 
-
 Metric	Measured Value	Target Budget	Status
 End-to-End Latency	~28 ms	< 50 ms	Optimal
 p95 Latency	~38 ms	< 60 ms	Optimal
 Gesture Accuracy (Held-out)	~95.2%	> 90%	High Confidence
 False-Positive Trigger Rate	< 2.8%	< 5%	Stable
 Frame Dropping Rate	0.0%	< 1%	Threaded I/O
-
 
 ## Action & Gesture Mapping
 
@@ -107,11 +105,9 @@ TrinetraAI/
 ├── requirements.txt
 └── main.py                      # Orchestrator and event loop
 
-
 ## Quickstart
 
 Prerequisites
-
 
 Python 3.10 or higher
 
