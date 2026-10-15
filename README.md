@@ -1,9 +1,6 @@
 ## TrinetraAI (Ambient-Vision Assistant)
 
-
 Real-time, hands-free desktop control pipeline empowering users with motor impairments to interact with operating systems via head pose estimation and trainable micro-gestures.
-
-
 
 Python
 Computer Vision
@@ -15,10 +12,7 @@ License: MIT
 
 Traditional Human-Computer Interaction (HCI) devices—mice, trackpads, and physical keyboards—assume fine motor control. For individuals living with ALS, cerebral palsy, spinal injuries, or severe tremors, standard input devices present substantial barriers.
 
-
 TrinetraAI bridges this gap by turning any consumer-grade 30 FPS webcam into an input interface:
-
-
 
 Zero Specialty Hardware: Runs locally on commodity CPU hardware without specialized eye-trackers.
 
