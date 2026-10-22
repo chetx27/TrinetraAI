@@ -132,8 +132,6 @@ python main.py --config config/settings.yaml
 
 Press q or ESC in the HUD window to exit and print session latency metrics.
 
-
-
 🎯 Calibrating & Training Custom Gestures
 
 If standard gesture boundaries do not suit your range of motion, record your own calibration set:
@@ -179,7 +177,6 @@ model:
 # Contributing
 
 Contributions make open-source assistive tools better for everyone.
-
 
 
 Fork the Project.
